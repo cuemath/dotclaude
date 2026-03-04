@@ -18,6 +18,7 @@ cd ~/code/work/dotclaude
 |-------|-------------|
 | `deploy_to_testenv` | Trigger an AWS CodeBuild build using repo context (project, branch, test env) and return the console URL |
 | `pr` | Stage, commit, push, and open a PR in one shot |
+| `update_team_skills` | Pull latest team skills from the dotclaude repo and run setup.sh to install new ones |
 
 ## Adding a new skill
 
