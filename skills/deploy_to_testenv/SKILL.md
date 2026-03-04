@@ -16,11 +16,13 @@ Trigger an AWS CodeBuild build using context derived from the repo and return th
 2. Read `.env.development.local` and grep for `VITE_DEV_SERVER_PROXY`. Extract the `testenvNN` portion from the URL using regex (e.g., from `https://leap.testenv37.cuemath.com` extract `testenv37`).
 
 3. Get the current git branch:
+
 ```bash
 git branch --show-current
 ```
 
 4. Run the build:
+
 ```bash
 aws codebuild start-build \
   --project-name "<project-name>" \
@@ -35,9 +37,11 @@ aws codebuild start-build \
    - Account ID from `build.arn` (field 4 when split by `:`)
 
 6. Construct the AWS Console URL:
+
 ```
 https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/<account-id>/projects/<project>/build/<build-id>/log
 ```
+
 where `<build-id>` is the full `build.id` value (URL-encode the `:` as `%3A`).
 
 7. Output the build number and clickable console URL to the user.
