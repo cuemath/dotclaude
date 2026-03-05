@@ -28,6 +28,7 @@ Existing symlinks are skipped. If a non-symlink directory exists at the target, 
 | `deploy_to_testenv` | `/deploy_to_testenv` | Trigger AWS CodeBuild build and return console URL |
 | `post_merge_cleanup` | `/post_merge_cleanup` | Checkout master, delete feature branch, pull latest |
 | `update_team_skills` | `/update_team_skills` | Pull latest dotclaude repo and run setup.sh |
+| `db_query` | `/db_query [service] [query]` | Connect to a Cuemath analytics replica via SSH tunnel and run a SQL query |
 
 ## Adding a New Skill
 
