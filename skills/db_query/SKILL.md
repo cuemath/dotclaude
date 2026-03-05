@@ -1,7 +1,7 @@
 ---
 name: db_query
 description: Connect to a Cuemath analytics replica database via SSH tunnel and run a read-only SQL query
-allowed-tools: Bash(ssh *), Bash(PGOPTIONS=*), Bash(kill *), Bash(lsof *), Read, Grep
+allowed-tools: Bash(ssh *), Bash(PGOPTIONS=*), Bash(kill *), Bash(lsof *), Bash(which *), Bash(find *), Bash(ls *), Read, Grep
 argument-hint: "[service_name] [query or question]"
 ---
 
@@ -11,8 +11,26 @@ Connect to a Cuemath PostgreSQL analytics replica via SSH tunnel and run a read-
 
 ## Connection Details
 
-SSH tunnel through `torpedo.cuemath.com`, key: `~/.ssh/id_ed25519`, local port: `15432`.
-User: `dbadmin`, password: `$DB_PASSWORD` env var. All replicas are read-only.
+SSH tunnel through `torpedo.cuemath.com`, local port: `15432`.
+DB user: `dbadmin`, password: `$DB_PASSWORD` env var. All replicas are read-only.
+
+### User Config
+
+**First, read `~/.claude/db_query_config.json`** to get the user's saved settings (`ssh_user`, `ssh_key`, `db_password_env`).
+
+If the config file doesn't exist or is missing fields, ask the user and then create/update `~/.claude/db_query_config.json` so they won't be asked again. This file is user-local (not in the shared skills directory). The SSH username pattern is typically `firstnamelastname`.
+
+### psql Binary
+
+`psql` may not be on `$PATH`. If `which psql` fails, find it:
+```bash
+which psql 2>/dev/null || find /opt/homebrew -name "psql" -type f 2>/dev/null | head -1
+```
+Use the full path to `psql` in all subsequent commands.
+
+### DB_PASSWORD
+
+The `$DB_PASSWORD` env var must be available in the Bash tool's shell. If the connection fails with "no password supplied", ask the user to provide the password directly so it can be passed inline as `PGPASSWORD=<password>`.
 
 ### RDS Hostnames
 
@@ -46,16 +64,18 @@ Database name = service name (lowercase). If unsure which cluster a service belo
 
 1. Identify the target service and its RDS hostname from the tables above.
 
-2. Open the SSH tunnel:
+2. Find the psql binary (see "psql Binary" section above). Store the path for use in step 4.
+
+3. Open the SSH tunnel (replace `<ssh_user>` and `<ssh_key>` per sections above):
 
 ```bash
-ssh -f -N -L 15432:<rds_host>:5432 torpedo.cuemath.com -i ~/.ssh/id_ed25519
+ssh -f -N -L 15432:<rds_host>:5432 <ssh_user>@torpedo.cuemath.com -i <ssh_key>
 ```
 
-3. Run the query:
+4. Run the query (use the full psql path from step 2):
 
 ```bash
-PGOPTIONS='-c statement_timeout=300000' PGPASSWORD=$DB_PASSWORD psql -h localhost -p 15432 -U dbadmin -d <db_name> -c "<query>"
+PGOPTIONS='-c statement_timeout=300000' PGPASSWORD=$DB_PASSWORD <psql_path> -h localhost -p 15432 -U dbadmin -d <db_name> -c "<query>"
 ```
 
 4. Always kill the tunnel when done:
@@ -69,7 +89,7 @@ kill $(lsof -ti:15432)
 - NEVER run `SELECT * FROM <table>` without a `WHERE` clause — ask the user for confirmation first
 - Use `COUNT`/aggregates when the user asks "how many" — don't fetch and count rows
 - NEVER hardcode the database password — always use `$DB_PASSWORD`
-- Always kill the SSH tunnel after the query session
+- Always kill the SSH tunnel after the query session. Do not ask whether to run this command or not. 
 
 Do NOT:
 
