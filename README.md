@@ -5,8 +5,8 @@ Shared [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skills for 
 ## Setup
 
 ```bash
-git clone git@github.com:<org>/dotclaude.git ~/code/work/dotclaude
-cd ~/code/work/dotclaude
+git clone git@github.com:cuemath/dotclaude.git
+cd dotclaude
 ./setup.sh
 ```
 
@@ -20,6 +20,7 @@ cd ~/code/work/dotclaude
 | `pr` | Stage, commit, push, and open a PR in one shot |
 | `post_merge_cleanup` | Switch to master, delete the current feature branch, and pull latest changes |
 | `update_team_skills` | Pull latest team skills from the dotclaude repo and run setup.sh to install new ones |
+| `db_query` | Connect to a Cuemath analytics replica via SSH tunnel and run a SQL query |
 
 ## Adding a new skill
 
