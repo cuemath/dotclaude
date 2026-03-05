@@ -5,8 +5,8 @@ Shared [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skills for 
 ## Setup
 
 ```bash
-git clone git@github.com:<org>/dotclaude.git ~/code/work/dotclaude
-cd ~/code/work/dotclaude
+git clone git@github.com:cuemath/dotclaude.git
+cd dotclaude
 ./setup.sh
 ```
 
