@@ -2,7 +2,7 @@
 name: deploy_to_testenv
 description: Trigger an AWS CodeBuild build using repo context (project, branch, test env) and return the console URL
 allowed-tools: Bash(aws codebuild*), Bash(git branch*), Read, Grep
-argument-hint: ""
+argument-hint: "[testenvNN]"
 ---
 
 # Deploy to Test Environment
@@ -13,7 +13,10 @@ Trigger an AWS CodeBuild build using context derived from the repo and return th
 
 1. Read the `.codebuild-project` file in the repo root to get the CodeBuild project name (trim whitespace).
 
-2. Read `.env.development.local` and grep for `VITE_DEV_SERVER_PROXY`. Extract the `testenvNN` portion from the URL using regex (e.g., from `https://leap.testenv37.cuemath.com` extract `testenv37`).
+2. Determine the test environment (`testenvNN`):
+   1. If the user provided an argument (e.g., `/deploy_to_testenv testenv37`), use it directly.
+   2. Else if `.env.development.local` exists and contains `VITE_DEV_SERVER_PROXY`, extract the `testenvNN` portion from the URL using regex (e.g., from `https://leap.testenv37.cuemath.com` extract `testenv37`).
+   3. Else stop and tell the user: "Could not determine test environment. Re-run with `/deploy_to_testenv testenvNN`."
 
 3. Get the current git branch:
 
@@ -45,3 +48,9 @@ https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/<account-id>/p
 where `<build-id>` is the full `build.id` value (URL-encode the `:` as `%3A`).
 
 7. Output the build number and clickable console URL to the user.
+
+## Do NOT
+
+- Ask for confirmation between steps — execute the full workflow fluidly
+- Offer follow-up suggestions after outputting the build URL
+- Over-explain what each step is doing — just run them
