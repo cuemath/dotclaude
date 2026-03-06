@@ -21,6 +21,7 @@ cd dotclaude
 | `post_merge_cleanup` | Switch to master, delete the current feature branch, and pull latest changes |
 | `update_team_skills` | Pull latest team skills from the dotclaude repo and run setup.sh to install new ones |
 | `db_query` | Connect to a Cuemath analytics replica via SSH tunnel and run a SQL query |
+| `cloudwatch_query` | Query CloudWatch Logs Insights for a Cuemath service or log group |
 
 ## Adding a new skill
 

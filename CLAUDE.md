@@ -29,6 +29,7 @@ Existing symlinks are skipped. If a non-symlink directory exists at the target, 
 | `post_merge_cleanup` | `/post_merge_cleanup` | Checkout master, delete feature branch, pull latest |
 | `update_team_skills` | `/update_team_skills` | Pull latest dotclaude repo and run setup.sh |
 | `db_query` | `/db_query [service] [query]` | Connect to a Cuemath analytics replica via SSH tunnel and run a SQL query |
+| `cloudwatch_query` | `/cloudwatch_query [service_or_log_group] [query]` | Query CloudWatch Logs Insights for a Cuemath service or log group |
 
 ## Adding a New Skill
 
