@@ -48,9 +48,3 @@ https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/<account-id>/p
 where `<build-id>` is the full `build.id` value (URL-encode the `:` as `%3A`).
 
 7. Output the build number and clickable console URL to the user.
-
-## Do NOT
-
-- Ask for confirmation between steps — execute the full workflow fluidly
-- Offer follow-up suggestions after outputting the build URL
-- Over-explain what each step is doing — just run them
