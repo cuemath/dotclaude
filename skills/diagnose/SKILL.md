@@ -1,7 +1,7 @@
 ---
 name: diagnose
 description: Debug production issues (infra or application). Accepts a Sentry URL, problem description, or screenshot. Runs read-only diagnostics across Sentry, CloudWatch, kubectl, SQS, RDS, and source code. Returns a diagnosis with confidence %.
-allowed-tools: Bash(kubectl get *), Bash(kubectl describe *), Bash(kubectl logs *), Bash(kubectl top *), Bash(kubectl config *), Bash(kubectl exec *), Bash(aws logs start-query *), Bash(aws logs get-query-results *), Bash(aws cloudwatch get-metric-*), Bash(aws sqs get-queue-attributes *), Bash(aws sqs list-queues *), Bash(aws rds describe-*), Bash(curl -s *), Bash(date *), Bash(sleep *), Bash(git -C * pull *), Bash(git pull *), Bash(ssh -f -N -L *), Bash(PGOPTIONS=*), Bash(kill *), Bash(lsof *), Bash(which *), Bash(find /opt/homebrew *), Bash(ls *), Bash(cat *), Read, Grep, Glob
+allowed-tools: Bash(cp ~/.kube/config /tmp/diagnose-kubeconfig*), Bash(rm -f /tmp/diagnose-kubeconfig*), Bash(KUBECONFIG=/tmp/diagnose-kubeconfig *), Bash(kubectl get *), Bash(kubectl describe *), Bash(kubectl logs *), Bash(kubectl top *), Bash(kubectl config *), Bash(kubectl exec *), Bash(aws logs start-query *), Bash(aws logs get-query-results *), Bash(aws cloudwatch get-metric-*), Bash(aws sqs get-queue-attributes *), Bash(aws sqs list-queues *), Bash(aws rds describe-*), Bash(curl -s *), Bash(date *), Bash(sleep *), Bash(git -C * pull *), Bash(git pull *), Bash(ssh -f -N -L *), Bash(PGOPTIONS=*), Bash(kill *), Bash(lsof *), Bash(which *), Bash(find /opt/homebrew *), Bash(ls *), Bash(cat *), Read, Grep, Glob
 argument-hint: "<sentry_url OR problem description OR screenshot>"
 ---
 
@@ -62,13 +62,24 @@ If a path doesn't exist, try the other repo paths. If still not found, ask the u
 - **CloudWatch log group:** `/aws/containerinsights/cuemath-k8-prod/application`
 - **CoreDNS:** 2 pods, iptables-mode kube-proxy, no NodeLocal DNSCache
 
-Verify kubectl context before running any kubectl commands:
+**Sandboxed kubectl context** — never modify the user's global kubeconfig. Shell env vars don't persist across Bash tool calls, so use the `KUBECONFIG` env var prefix on every kubectl command.
+
+**Setup** — create an isolated kubeconfig copy and set context on it:
 ```bash
-kubectl config current-context
+cp ~/.kube/config /tmp/diagnose-kubeconfig && KUBECONFIG=/tmp/diagnose-kubeconfig kubectl config use-context arn:aws:eks:ap-southeast-1:484426514402:cluster/cuemath-k8-prod
 ```
-If not pointing to `cuemath-k8-prod`, switch:
+
+**Every kubectl command** must be prefixed with `KUBECONFIG=/tmp/diagnose-kubeconfig`:
 ```bash
-kubectl config use-context arn:aws:eks:ap-southeast-1:484426514402:cluster/cuemath-k8-prod
+KUBECONFIG=/tmp/diagnose-kubeconfig kubectl get pods -n cuemath
+KUBECONFIG=/tmp/diagnose-kubeconfig kubectl describe hpa <service> -n cuemath
+```
+
+This ensures the user's global `~/.kube/config` stays untouched. If the skill crashes or is aborted, no cleanup is needed — the temp file is harmless.
+
+**Cleanup** — after the diagnosis is complete:
+```bash
+rm -f /tmp/diagnose-kubeconfig
 ```
 
 ## Input Parsing

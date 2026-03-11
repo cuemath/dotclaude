@@ -78,10 +78,10 @@ Database name = service name (lowercase). If unsure which cluster a service belo
 
 2. Find the psql binary (see "psql Binary" section above). Store the path for use in step 4.
 
-3. Open the SSH tunnel (use `user.ssh_user` and `user.ssh_key` from config):
+3. Kill any leftover tunnel on port 15432 from a previous run, then open a fresh one:
 
 ```bash
-ssh -f -N -L 15432:<rds_host>:5432 <user.ssh_user>@torpedo.cuemath.com -i <user.ssh_key>
+kill $(lsof -ti:15432) 2>/dev/null; ssh -f -N -L 15432:<rds_host>:5432 <user.ssh_user>@torpedo.cuemath.com -i <user.ssh_key>
 ```
 
 4. Run the query (use the full psql path from step 2):
@@ -90,10 +90,10 @@ ssh -f -N -L 15432:<rds_host>:5432 <user.ssh_user>@torpedo.cuemath.com -i <user.
 PGOPTIONS='-c statement_timeout=300000' PGPASSWORD=$DB_PASSWORD <psql_path> -h localhost -p 15432 -U dbadmin -d <db_name> -c "<query>"
 ```
 
-4. Always kill the tunnel when done:
+5. Always kill the tunnel when done:
 
 ```bash
-kill $(lsof -ti:15432)
+kill $(lsof -ti:15432) 2>/dev/null
 ```
 
 ## Query Guardrails
