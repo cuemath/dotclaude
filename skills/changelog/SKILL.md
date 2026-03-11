@@ -13,22 +13,24 @@ Generate a structured CHANGELOG.md entry from the current feature branch's diff 
 
 1. Run `git branch --show-current` to get the current branch name. If it is `master` or `production`, abort immediately with: "ERROR: You must be on a feature branch to generate a changelog. Current branch is `<branch>`."
 
-2. Read `package.json` in the project root and extract the `version` field.
+2. Run `git diff master...HEAD --stat` to check if there are any changes. If the output is empty, abort with: "No changes found between this branch and master. Nothing to generate a changelog for."
 
-3. Search the codebase for a codepush version constant by grepping for `CODEPUSH_PATCH_VERSION`. If found, extract the value and append it to the version (e.g., if version is `5.0.5` and codepush value is `v2`, the final version is `5.0.5.v2`). If not found, use the version from step 2 as-is.
+3. Read `package.json` in the project root and extract the `version` field.
 
-4. Get today's date formatted as `DD-MM-YYYY`.
+4. Search the codebase for a codepush version constant by grepping for `CODEPUSH_PATCH_VERSION`. If found, extract the value and append it to the version (e.g., if version is `5.0.5` and codepush value is `v2`, the final version is `5.0.5.v2`). If not found, use the version from step 3 as-is.
 
-5. Run `git diff master...HEAD` to get the full diff of the feature branch against master.
+5. Get today's date formatted as `DD-MM-YYYY`.
 
-6. Analyze the diff carefully and generate concise, human-readable changelog entries. Categorize them under the appropriate headings:
+6. Run `git diff master...HEAD` to get the full diff of the feature branch against master.
+
+7. Analyze the diff carefully and generate concise, human-readable changelog entries. Categorize them under the appropriate headings:
    - `### Changed` — modifications to existing behavior
    - `### Added` — new features or capabilities
    - `### Fixed` — bug fixes
    - `### Removed` — removed features or code
      Only include headings that have entries. Each entry should be a single bullet point describing the change from a user/product perspective.
 
-7. Read the existing `CHANGELOG.md` if it exists. Insert the new version block immediately after the `# Changelog` header line (before any previous entries). If `CHANGELOG.md` does not exist, create one with the `# Changelog` header followed by the new version block.
+8. Read the existing `CHANGELOG.md` if it exists. Insert the new version block immediately after the `# Changelog` header line (before any previous entries). If `CHANGELOG.md` does not exist, create one with the `# Changelog` header followed by the new version block.
 
 The version block format is:
 
