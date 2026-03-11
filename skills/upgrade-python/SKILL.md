@@ -246,7 +246,9 @@ Apply all changes from the analysis document.
 
 ### Steps
 
-1. **Create upgrade branch:**
+1. **Verify environment:** Ensure `ENV` is set to `local` (or unset). Abort if pointed at staging/production.
+
+2. **Create upgrade branch:**
 
 ```bash
 git checkout master && git pull
@@ -255,40 +257,40 @@ git checkout -b python-3.13-upgrade
 
 If branch already exists, check it out instead.
 
-2. **Update Dockerfile** — change the FROM line to:
+3. **Update Dockerfile** — change only the FROM line to:
 
 ```
 FROM 484426514402.dkr.ecr.ap-southeast-1.amazonaws.com/flask-sqlalchemy:supervisor-python3.13
 ```
 
-Keep everything else in the Dockerfile the same. Reference economy's Dockerfile at `/Users/shubham.vats/workspace/microservices/economy/Dockerfile` for the pattern.
+Leave everything else (COPY, WORKDIR, ENTRYPOINT) untouched.
 
-3. **Update requirements.txt** — apply all changes from the analysis doc:
+4. **Update requirements.txt** — apply all changes from the analysis doc. All services use `requirements.txt` as the source of truth (the build pipeline generates `prod_requirements.txt` from it):
    - Upgrade pinned versions to 3.13-compatible versions per the dependency table
    - Remove deprecated packages (flask-script, raven, boto v2, etc.)
    - Remove packages already in the base image (see Reference section below for the full list — includes Flask, SQLAlchemy, Werkzeug, gevent, greenlet, psycopg2-binary, Flask-RESTful, Flask-Admin, WTForms, SQLAlchemy-Utils, OpenTelemetry stack, and more)
    - Keep internal git packages (cueutil, publishsubscribe, requestlogger, servicecaller, cachehandler, authhandler)
    - Keep transitive deps needed by internal packages (boto3, requests, etc.)
    - Add section comments like the economy service uses
-   - Reference economy's requirements at `/Users/shubham.vats/workspace/microservices/economy/requirements.txt`
 
-4. **Rewrite manage.py** — replace flask-script with Flask CLI:
+5. **Rewrite manage.py** — replace flask-script with Flask CLI:
    - Use `FlaskGroup` + `click` pattern
    - Preserve any custom commands (test, seed, etc.)
    - Do NOT add a custom `runserver` command — Flask CLI provides `flask run` natively
    - Reference economy's manage.py at `/Users/shubham.vats/workspace/microservices/economy/manage.py`
 
-5. **Apply all code changes** listed in the analysis doc section 3, in order of risk:
+6. **Apply all code changes** listed in the analysis doc section 3, in order of risk:
    - **LOW first:** `from __future__` removal, `raven` removal, dead import cleanup
    - **MEDIUM next:** `datetime.utc*` replacements, `engine.execute()` → context manager, `six` removal, `cached_property` stdlib swap
    - **HIGH last:** `BaseQuery` replacement, marshmallow 2→3 migration, `MutableDict`/`MutableList` replacement
    - **Async workers:** Check `app/asyncapi/` or `app/async/` or `app/utils/sqs_listener.py` — wrap `handle_message` body and `listener.listen()` with `with app.app_context():` if not already wrapped (flask-script auto-pushed context; Flask CLI does not)
    - When removing a URL-routed package (e.g., flask-profiler), also search for references to its URL paths in bypass/whitelist arrays (e.g., `bypass_paths` in `request_gateway.py`) and remove those entries
 
-6. **Local Testing (venv):**
+7. **Local Testing (venv):**
 
 ```bash
 # a. Activate shared Python 3.13 venv
+# NOTE: Adjust this path if your Python 3.13 venv is in a different location
 source ~/workspace/virtualenvs/python3_13/bin/activate
 
 # b. Install dependencies
@@ -307,7 +309,7 @@ deactivate
 
 Report pass/fail for each sub-step before proceeding.
 
-7. **Local Docker Build:**
+8. **Local Docker Build:**
 
 ```bash
 # a. Build the Docker image locally
@@ -316,7 +318,7 @@ docker build -t {service_name}:python3.13 .
 
 Report whether the build succeeded or failed. If failed, fix the issues and retry.
 
-8. **Deploy to TestEnv:**
+9. **Deploy to TestEnv:**
 
 Ask the user for their testenv number (e.g., `testenv37`). Then:
 
@@ -342,7 +344,7 @@ aws codebuild start-build \
 
 Output the AWS Console URLs for both builds so the user can monitor. Tell user to verify the service at `https://www.{testenv_number}.cuemath.com`.
 
-9. **Commit and push:**
+10. **Commit and push:**
 
 ```bash
 git add -A
@@ -355,7 +357,7 @@ git commit -m "Upgrade {service_name} to Python 3.13
 git push -u origin python-3.13-upgrade
 ```
 
-10. **Create PR:**
+11. **Create PR:**
 
 ```bash
 gh pr create --title "Upgrade {service_name} to Python 3.13" --body "$(cat <<'EOF'
@@ -481,26 +483,12 @@ If a service's requirements.txt pins any of these, **remove them** — the base 
 ## Economy Service Reference (Successfully Upgraded)
 
 ### Dockerfile Pattern
+Only change the `FROM` line. Leave everything else (COPY, WORKDIR, ENTRYPOINT) untouched — the build pipeline handles `prod_requirements.txt` generation from `requirements.txt`.
+
 ```dockerfile
+# Change FROM line to:
 FROM 484426514402.dkr.ecr.ap-southeast-1.amazonaws.com/flask-sqlalchemy:supervisor-python3.13
-COPY setup/supervisor.conf /etc/supervisor/conf.d/
-COPY prod_requirements.txt /requirements.txt
-RUN \
- apk add --no-cache git && \
- pip install --no-cache-dir -r requirements.txt && \
- apk del git
-
-COPY . /economy
-WORKDIR /economy
-
-COPY entrypoint.sh /usr/bin/
-ENTRYPOINT ["entrypoint.sh"]
 ```
-
-**Key notes:**
-- Some services use `requirements.txt`, others use `prod_requirements.txt` — check the existing Dockerfile's COPY line
-- The `WORKDIR` should match the service directory name
-- Keep the existing COPY/WORKDIR/ENTRYPOINT structure, only change the FROM line
 
 ### requirements.txt Pattern
 ```
@@ -1099,15 +1087,11 @@ All internal packages have been verified compatible with Python 3.13 through pre
 
 ## Services Already Upgraded (for reference)
 
-| Service | PR/Branch | Key Issues Encountered |
-|---|---|---|
-| economy | Merged | MutableDict removal, badge admin form removal (flask_admin_s3_upload), custom JSONEncoder removal, SQS listener app context fix (follow-up commit), redis Encoder `__slots__` |
-| concepts | Merged | cachehandler compatibility, large codebase, flask_admin_s3_upload removal |
-| inteladmingateway | Merged ([PR #314](https://github.com/cuemath/inteladmingateway/pull/314/)) | configure_scope removal, datetime.utcnow fix, six removal, RequestParser location hotfix ([PR #317](https://github.com/cuemath/inteladmingateway/pull/317/) — 29 min post-merge), DST timezone cache bug ([PR #318](https://github.com/cuemath/inteladmingateway/pull/318/)), multipart 415 on file upload ([PR #319](https://github.com/cuemath/inteladmingateway/pull/319/)) |
-| exam | Merged | Straightforward upgrade |
-| intelanalytics | Merged | Straightforward upgrade |
-| circle | In Progress | flask-profiler removal, `_mapper_zero()` replacement, redis Encoder `__slots__`, `_weakrefset` private import, sentry FlaskIntegration |
-| reporter | Merged | marshmallow unknown fields (`EXCLUDE`) on dataclass DTOs deserializing JSONB data, **PynamoDB 6 `Model.serialize()` collision on `FeedCardView`** (post-merge hotfix [PR #90]) |
+| Service           | PRs                                                                                                                                                                                                                                                                        |
+|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| economy           | [PR #35](https://github.com/cuemath/economy/pull/35/)                                                                                                                                                                                                                      |
+| inteladmingateway | [PR #314](https://github.com/cuemath/inteladmingateway/pull/314/), [PR #317](https://github.com/cuemath/inteladmingateway/pull/317/), [PR #318](https://github.com/cuemath/inteladmingateway/pull/318/), [PR #319](https://github.com/cuemath/inteladmingateway/pull/319/) | 
+| reporter          | [PR #89](https://github.com/cuemath/reporter/pull/89/), [PR #91](https://github.com/cuemath/reporter/pull/91/)                                                                                                                                                             |
 
 ---
 
