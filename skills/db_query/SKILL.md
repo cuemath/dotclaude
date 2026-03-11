@@ -16,9 +16,21 @@ DB user: `dbadmin`, password: `$DB_PASSWORD` env var. All replicas are read-only
 
 ### User Config
 
-**First, read `~/.claude/db_query_config.json`** to get the user's saved settings (`ssh_user`, `ssh_key`, `db_password_env`).
+**First, read `~/.claude/config.json`** to get the user's saved settings. Use `user.ssh_user`, `user.ssh_key`, and `db.db_password_env` fields.
 
-If the config file doesn't exist or is missing fields, ask the user and then create/update `~/.claude/db_query_config.json` so they won't be asked again. This file is user-local (not in the shared skills directory). The SSH username pattern is typically `firstnamelastname`.
+If the config file doesn't exist or is missing these fields, ask the user for ALL missing fields at once and create/update `~/.claude/config.json`. This file is user-local (not in the shared skills directory) and shared across skills. The SSH username pattern is typically `firstnamelastname`.
+
+```json
+{
+  "user": {
+    "ssh_user": "firstnamelastname",
+    "ssh_key": "~/.ssh/id_rsa"
+  },
+  "db": {
+    "db_password_env": "DB_PASSWORD"
+  }
+}
+```
 
 ### psql Binary
 
@@ -66,10 +78,10 @@ Database name = service name (lowercase). If unsure which cluster a service belo
 
 2. Find the psql binary (see "psql Binary" section above). Store the path for use in step 4.
 
-3. Open the SSH tunnel (replace `<ssh_user>` and `<ssh_key>` per sections above):
+3. Open the SSH tunnel (use `user.ssh_user` and `user.ssh_key` from config):
 
 ```bash
-ssh -f -N -L 15432:<rds_host>:5432 <ssh_user>@torpedo.cuemath.com -i <ssh_key>
+ssh -f -N -L 15432:<rds_host>:5432 <user.ssh_user>@torpedo.cuemath.com -i <user.ssh_key>
 ```
 
 4. Run the query (use the full psql path from step 2):
