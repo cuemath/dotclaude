@@ -1,8 +1,8 @@
 ---
-name: debug
+name: diagnose
 description: Debug production issues (infra or application). Accepts a Sentry URL, problem description, or screenshot. Runs read-only diagnostics across Sentry, CloudWatch, kubectl, SQS, RDS, and source code. Returns a diagnosis with confidence %.
 allowed-tools: Bash(kubectl get *), Bash(kubectl describe *), Bash(kubectl logs *), Bash(kubectl top *), Bash(kubectl config *), Bash(kubectl exec *), Bash(aws logs start-query *), Bash(aws logs get-query-results *), Bash(aws cloudwatch get-metric-*), Bash(aws sqs get-queue-attributes *), Bash(aws sqs list-queues *), Bash(aws rds describe-*), Bash(curl -s *), Bash(date *), Bash(sleep *), Bash(git -C * pull *), Bash(git pull *), Bash(ssh -f -N -L *), Bash(PGOPTIONS=*), Bash(kill *), Bash(lsof *), Bash(which *), Bash(find /opt/homebrew *), Bash(ls *), Bash(cat *), Read, Grep, Glob
-argument-hint: "<sentry_url OR problem description>"
+argument-hint: "<sentry_url OR problem description OR screenshot>"
 ---
 
 # Debug
