@@ -1,5 +1,5 @@
 ---
-name: db_query
+name: db-query
 description: Connect to a Cuemath analytics replica database via SSH tunnel and run a read-only SQL query
 allowed-tools: Bash(ssh *), Bash(PGOPTIONS=*), Bash(kill *), Bash(lsof *), Bash(which *), Bash(find *), Bash(ls *), Read, Grep
 argument-hint: "[service_name] [query or question]"
@@ -16,9 +16,9 @@ DB user: `dbadmin`, password: `$DB_PASSWORD` env var. All replicas are read-only
 
 ### User Config
 
-**First, read `~/.claude/db_query_config.json`** to get the user's saved settings (`ssh_user`, `ssh_key`, `db_password_env`).
+**First, read `~/.claude/db-query-config.json`** to get the user's saved settings (`ssh_user`, `ssh_key`, `db_password_env`).
 
-If the config file doesn't exist or is missing fields, ask the user and then create/update `~/.claude/db_query_config.json` so they won't be asked again. This file is user-local (not in the shared skills directory). The SSH username pattern is typically `firstnamelastname`.
+If the config file doesn't exist or is missing fields, ask the user and then create/update `~/.claude/db-query-config.json` so they won't be asked again. This file is user-local (not in the shared skills directory). The SSH username pattern is typically `firstnamelastname`.
 
 ### psql Binary
 

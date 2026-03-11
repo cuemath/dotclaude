@@ -1,5 +1,5 @@
 ---
-name: update_team_skills
+name: update-team-skills
 description: Pull latest team skills from the dotclaude repo and run setup.sh to install new ones
 allowed-tools: Bash(readlink *), Bash(git -C * pull), Bash(*/setup.sh), Bash(ls *)
 argument-hint: ""
