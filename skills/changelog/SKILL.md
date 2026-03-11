@@ -17,7 +17,7 @@ Generate a structured CHANGELOG.md entry from the current feature branch's diff 
 
 3. Read `package.json` in the project root and extract the `version` field.
 
-4. Search the codebase for a codepush version constant by grepping for `CODEPUSH_PATCH_VERSION`. If found, extract the value and append it to the version (e.g., if version is `5.0.5` and codepush value is `v2`, the final version is `5.0.5.v2`). If not found, use the version from step 3 as-is.
+4. Search the codebase for a codepush version constant by grepping for `CODEPUSH_PATCH_VERSION`. If found, extract the value and append it to the version (e.g., if version is `5.0.5` and codepush value is `v2`, the final version is `5.0.5.v2`). If not found, use the version from step 3 as-is. If both the package.json version and the codepush version are unchanged from master (i.e., the same on both branches), leave the version blank in the header (e.g., `## [] - DD-MM-YYYY`).
 
 5. Get today's date formatted as `DD-MM-YYYY`.
 
@@ -35,7 +35,8 @@ Generate a structured CHANGELOG.md entry from the current feature branch's diff 
 The version block format is:
 
 ```
-## [<version>] - DD-MM-YYYY
+## [<version>] - DD-MM-YYYY    (if version changed)
+## [] - DD-MM-YYYY              (if version is unchanged)
 
 ### Added
 - Description of what was added
