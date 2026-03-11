@@ -1,5 +1,5 @@
 ---
-name: notion_task
+name: notion-task
 description: Create and manage Notion tasks in the Cuemath PED Features database with proper epic linking
 allowed-tools: mcp__claude_ai_Notion__notion-search, mcp__claude_ai_Notion__notion-fetch, mcp__claude_ai_Notion__notion-create-pages, mcp__claude_ai_Notion__notion-update-page
 argument-hint: "[vertical/epic] [task description]"

@@ -30,7 +30,7 @@ Existing symlinks are skipped. If a non-symlink directory exists at the target, 
 | `update_team_skills` | `/update_team_skills` | Pull latest dotclaude repo and run setup.sh |
 | `db_query` | `/db_query [service] [query]` | Connect to a Cuemath analytics replica via SSH tunnel and run a SQL query |
 | `cloudwatch_query` | `/cloudwatch_query [service_or_log_group] [query]` | Query CloudWatch Logs Insights for a Cuemath service or log group |
-| `notion_task` | `/notion_task [vertical/epic] [task description]` | Create and manage Notion tasks in the PED Features database with epic linking |
+| `notion-task` | `/notion-task [vertical/epic] [task description]` | Create and manage Notion tasks in the PED Features database with epic linking |
 
 ## Adding a New Skill
 
