@@ -1,13 +1,13 @@
 ---
 name: diagnose
-description: Debug production issues (infra or application). Accepts a Sentry URL, problem description, or screenshot. Runs read-only diagnostics across Sentry, CloudWatch, kubectl, SQS, RDS, and source code. Returns a diagnosis with confidence %.
-allowed-tools: Bash(cp ~/.kube/config /tmp/diagnose-kubeconfig*), Bash(rm -f /tmp/diagnose-kubeconfig*), Bash(KUBECONFIG=/tmp/diagnose-kubeconfig *), Bash(kubectl get *), Bash(kubectl describe *), Bash(kubectl logs *), Bash(kubectl top *), Bash(kubectl config *), Bash(kubectl exec * -- cat *), Bash(kubectl exec * -- ls *), Bash(kubectl exec * -- env *), Bash(kubectl exec * -- nslookup *), Bash(kubectl exec * -- ps *), Bash(kubectl exec * -- df *), Bash(kubectl exec * -- free *), Bash(kubectl exec * -- netstat *), Bash(kubectl exec * -- sh -c "which *"), Bash(aws sqs receive-message *), Bash(aws logs start-query *), Bash(aws logs get-query-results *), Bash(aws cloudwatch get-metric-*), Bash(aws sqs get-queue-attributes *), Bash(aws sqs list-queues *), Bash(aws rds describe-*), Bash(curl -s *), Bash(date *), Bash(sleep *), Bash(git -C * pull *), Bash(git pull *), Bash(ssh -f -N -L *), Bash(PGOPTIONS=*), Bash(kill *), Bash(lsof *), Bash(which *), Bash(find /opt/homebrew *), Bash(ls *), Bash(cat *), Read, Grep, Glob
-argument-hint: "<sentry_url OR problem description OR screenshot>"
+description: Diagnose production issues from a Sentry URL, Slack URL, description, or screenshot
+allowed-tools: Bash(cp ~/.kube/config /tmp/diagnose-kubeconfig*), Bash(rm -f /tmp/diagnose-kubeconfig*), Bash(KUBECONFIG=/tmp/diagnose-kubeconfig *), Bash(kubectl get *), Bash(kubectl describe *), Bash(kubectl logs *), Bash(kubectl top *), Bash(kubectl config *), Bash(kubectl exec * -- cat *), Bash(kubectl exec * -- ls *), Bash(kubectl exec * -- env *), Bash(kubectl exec * -- nslookup *), Bash(kubectl exec * -- ps *), Bash(kubectl exec * -- df *), Bash(kubectl exec * -- free *), Bash(kubectl exec * -- netstat *), Bash(kubectl exec * -- sh -c "which *"), Bash(aws sqs receive-message *), Bash(aws logs start-query *), Bash(aws logs get-query-results *), Bash(aws cloudwatch get-metric-*), Bash(aws sqs get-queue-attributes *), Bash(aws sqs list-queues *), Bash(aws rds describe-*), Bash(curl -s *), Bash(date *), Bash(sleep *), Bash(git -C * pull *), Bash(git pull *), Bash(ssh -f -N -L *), Bash(ssh -o *), Bash(aws sts get-caller-identity *), Bash(PGOPTIONS=*), Bash(kill *), Bash(lsof *), Bash(which *), Bash(find /opt/homebrew *), Bash(ls *), Bash(cat *), Read, Grep, Glob, mcp__slack__slack_get_channel_history, mcp__slack__slack_get_thread_replies, mcp__slack__slack_get_user_profile
+argument-hint: "<sentry_url OR slack_url OR problem description OR screenshot>"
 ---
 
 # Debug
 
-Diagnose production issues — infrastructure, application, or both. Accepts a Sentry issue URL, a problem description, or a screenshot as input. Runs read-only diagnostics and returns a root cause diagnosis with a confidence percentage.
+Diagnose production issues — infrastructure, application, or both. Accepts a Sentry issue URL, a Slack message URL, a problem description, or a screenshot as input. Runs read-only diagnostics and returns a root cause diagnosis with a confidence percentage.
 
 ## Config
 
@@ -33,6 +33,10 @@ Required fields for this skill:
     "backend": "/Users/dev/cuemath/web",
     "frontend": "/Users/dev/cuemath/react"
   }
+  // If web/ and react/ are under the same parent (e.g. ~/workspaces/cuemath/),
+  // just use that parent for both:
+  //   "backend": "~/workspaces/cuemath/web"
+  //   "frontend": "~/workspaces/cuemath/react"
 }
 ```
 
@@ -103,6 +107,26 @@ From the Sentry data, extract:
 - Stacktrace (file, function, line number)
 - Any relevant tags (environment, transaction, url)
 
+### Slack Message URL
+Parse the channel ID and message timestamp from the URL. Slack message URLs follow this pattern:
+```
+https://<workspace>.slack.com/archives/<channel_id>/p<timestamp_without_dot>
+```
+
+Convert the timestamp: remove the leading `p`, then insert a `.` so 6 digits come after it (e.g., `p1710234567890123` → `1710234567.890123`).
+
+1. **Fetch the message thread** using `mcp__slack__slack_get_thread_replies` with the extracted `channel_id` and `thread_ts`. This returns the parent message and all replies.
+2. **If no thread replies** (the message isn't a thread parent), fetch recent channel history with `mcp__slack__slack_get_channel_history` and find the message by timestamp.
+3. **Resolve user names** for any `<@U...>` mentions using `mcp__slack__slack_get_user_profile` so the context is human-readable.
+
+From the Slack message(s), extract:
+- Problem description and symptoms
+- Service names, error messages, or Sentry URLs mentioned
+- Screenshots or links shared in the thread
+- Time range or when the issue was first reported
+
+If the Slack thread contains a Sentry URL, continue with Sentry URL parsing as well.
+
 ### Problem Description (text)
 Parse for: service names, error types, time ranges, symptoms.
 
@@ -131,7 +155,29 @@ Estimated commands: ~N
 
 Wait for the user to approve or adjust the plan before proceeding.
 
-### Phase 2: TRIAGE
+### Phase 2: PREFLIGHT
+
+Based on the approved plan, determine which tool categories are needed and check **only those**:
+
+| Category | When needed | Check |
+|----------|-------------|-------|
+| **Repo paths** | Always | `ls <repos.backend> <repos.frontend>` |
+| **Sentry** | Input is a Sentry URL, or plan includes Sentry search | `curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer <token>" "https://sentry.io/api/0/organizations/cuemathcom/"` |
+| **kubectl + AWS** | Plan includes pod/HPA/CloudWatch/SQS checks | `which kubectl aws`, `aws sts get-caller-identity`, `KUBECONFIG=/tmp/diagnose-kubeconfig kubectl get nodes --no-headers 2>&1 | head -1` |
+| **SSH + psql** | Plan includes DB queries | `which psql`, `ssh -o ConnectTimeout=5 -o BatchMode=yes <ssh_user>@torpedo.cuemath.com echo ok` |
+
+Run the relevant checks in parallel. If any fail, print what's missing and how to fix it — but only block the steps that depend on the failing tool. If the diagnosis can proceed with just code reading + Sentry, do that.
+
+```
+PREFLIGHT
+=========
+[✓] Repo paths exist
+[✓] Sentry token valid
+[—] kubectl/AWS: skipped (not needed for this diagnosis)
+[—] SSH/psql: skipped (not needed for this diagnosis)
+```
+
+### Phase 3: TRIAGE
 
 Gather baseline data from all relevant sources. Run commands in parallel where possible.
 
@@ -203,7 +249,7 @@ TRIAGE SUMMARY
 - Sentry: <issue summary if available>
 ```
 
-### Phase 3: HYPOTHESIZE
+### Phase 4: HYPOTHESIZE
 
 Based on triage data, form hypotheses. For each hypothesis, state:
 - What it is
@@ -232,7 +278,7 @@ HYPOTHESES
 3. [15%] <hypothesis> — ...
 ```
 
-### Phase 4: VERIFY
+### Phase 5: VERIFY
 
 For each hypothesis (starting with highest confidence), run targeted diagnostics to confirm or rule it out.
 
@@ -280,7 +326,7 @@ Hypothesis 1: [65% -> 90%] — confirmed by <new evidence>
 Hypothesis 2: [20% -> 5%] — contradicted by <new evidence>
 ```
 
-### Phase 5: SELF-CHECK
+### Phase 6: SELF-CHECK
 
 Before presenting the final diagnosis, challenge it:
 
@@ -298,7 +344,7 @@ What's missing: <what additional data would reach 95%>
 Suggested next steps: <what to check manually>
 ```
 
-### Phase 6: DIAGNOSIS
+### Phase 7: DIAGNOSIS
 
 Only present if confidence >= 95%.
 
