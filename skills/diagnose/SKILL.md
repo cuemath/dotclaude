@@ -133,6 +133,15 @@ Parse for: service names, error types, time ranges, symptoms.
 ### Screenshot
 Read the screenshot using the Read tool (it supports images). Extract: error messages, service names, metrics, timestamps, graph trends.
 
+## Core Principle: Never Assume — Always Verify
+
+Never assume anything. Always verify. Always verify.
+
+- Before concluding which endpoint a client calls, verify with production logs (CloudWatch, request logs). Multiple API versions coexist — older ones may be dead code.
+- Before fixing code, confirm it's the code that actually runs in production. Trace from the actual client request URL (from logs) to the handler, THEN fix that handler.
+- Before concluding how data flows, verify with actual data.
+- If you can verify a claim, verify it. Don't skip verification to save time — wrong assumptions waste more time than checking.
+
 ## Debugging Framework
 
 ### Phase 1: PLAN
