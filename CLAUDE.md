@@ -25,11 +25,11 @@ Existing symlinks are skipped. If a non-symlink directory exists at the target, 
 | Skill | Trigger | Description |
 |---|---|---|
 | `pr` | `/pr` | Stage, commit, push, and create a PR |
-| `deploy_to_testenv` | `/deploy_to_testenv` | Trigger AWS CodeBuild build and return console URL |
-| `post_merge_cleanup` | `/post_merge_cleanup` | Checkout master, delete feature branch, pull latest |
-| `update_team_skills` | `/update_team_skills` | Pull latest dotclaude repo and run setup.sh |
-| `db_query` | `/db_query [service] [query]` | Connect to a Cuemath analytics replica via SSH tunnel and run a SQL query |
-| `cloudwatch_query` | `/cloudwatch_query [service_or_log_group] [query]` | Query CloudWatch Logs Insights for a Cuemath service or log group |
+| `deploy-to-testenv` | `/deploy-to-testenv` | Trigger AWS CodeBuild build and return console URL |
+| `post-merge-cleanup` | `/post-merge-cleanup` | Checkout master, delete feature branch, pull latest |
+| `update-team-skills` | `/update-team-skills` | Pull latest dotclaude repo and run setup.sh |
+| `db-query` | `/db-query [service] [query]` | Connect to a Cuemath analytics replica via SSH tunnel and run a SQL query |
+| `cloudwatch-query` | `/cloudwatch-query [service_or_log_group] [query]` | Query CloudWatch Logs Insights for a Cuemath service or log group |
 | `diagnose` | `/diagnose <sentry_url OR problem description>` | Debug production issues (infra or app). Read-only diagnostics across Sentry, kubectl, CloudWatch, SQS, RDS, and source code. Returns diagnosis with confidence % |
 
 ## Adding a New Skill
