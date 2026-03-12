@@ -1,5 +1,5 @@
 ---
-name: post_merge_cleanup
+name: post-merge-cleanup
 description: Switch to master, delete the current feature branch, and pull latest changes
 allowed-tools: Bash(git branch*), Bash(git checkout*), Bash(git pull*)
 argument-hint: ""

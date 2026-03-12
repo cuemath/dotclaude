@@ -1,5 +1,5 @@
 ---
-name: cloudwatch_query
+name: cloudwatch-query
 description: Query CloudWatch Logs Insights for a Cuemath service or log group. Use when checking service logs, log counts, error rates, or verifying service activity.
 allowed-tools: Bash(aws logs start-query *), Bash(aws logs get-query-results *), Bash(date *), Bash(sleep *)
 argument-hint: "[service_name_or_log_group] [query or question]"

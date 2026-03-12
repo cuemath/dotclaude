@@ -1,5 +1,5 @@
 ---
-name: db_query
+name: db-query
 description: Connect to a Cuemath analytics replica database via SSH tunnel and run a read-only SQL query
 allowed-tools: Bash(ssh *), Bash(PGOPTIONS=*), Bash(kill *), Bash(lsof *), Bash(which *), Bash(find *), Bash(ls *), Read, Grep
 argument-hint: "[service_name] [query or question]"
