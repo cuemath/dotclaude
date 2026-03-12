@@ -1,7 +1,7 @@
 ---
 name: diagnose
 description: Diagnose production issues from a Sentry URL, Slack URL, description, or screenshot
-allowed-tools: Bash(cp ~/.kube/config /tmp/diagnose-kubeconfig*), Bash(rm -f /tmp/diagnose-kubeconfig*), Bash(KUBECONFIG=/tmp/diagnose-kubeconfig *), Bash(kubectl get *), Bash(kubectl describe *), Bash(kubectl logs *), Bash(kubectl top *), Bash(kubectl config *), Bash(kubectl exec * -- cat *), Bash(kubectl exec * -- ls *), Bash(kubectl exec * -- env *), Bash(kubectl exec * -- nslookup *), Bash(kubectl exec * -- ps *), Bash(kubectl exec * -- df *), Bash(kubectl exec * -- free *), Bash(kubectl exec * -- netstat *), Bash(kubectl exec * -- sh -c "which *"), Bash(aws sqs receive-message *), Bash(aws logs start-query *), Bash(aws logs get-query-results *), Bash(aws cloudwatch get-metric-*), Bash(aws sqs get-queue-attributes *), Bash(aws sqs list-queues *), Bash(aws rds describe-*), Bash(curl -s *), Bash(date *), Bash(sleep *), Bash(git -C * pull *), Bash(git pull *), Bash(ssh -f -N -L *), Bash(ssh -o *), Bash(aws sts get-caller-identity *), Bash(PGOPTIONS=*), Bash(kill *), Bash(lsof *), Bash(which *), Bash(find /opt/homebrew *), Bash(ls *), Bash(cat *), Read, Grep, Glob, mcp__slack__slack_get_channel_history, mcp__slack__slack_get_thread_replies, mcp__slack__slack_get_user_profile
+allowed-tools: Bash(cp ~/.kube/config /tmp/diagnose-kubeconfig*), Bash(rm -f /tmp/diagnose-kubeconfig*), Bash(KUBECONFIG=/tmp/diagnose-kubeconfig *), Bash(kubectl get *), Bash(kubectl describe *), Bash(kubectl logs *), Bash(kubectl top *), Bash(kubectl config *), Bash(kubectl exec * -- cat *), Bash(kubectl exec * -- ls *), Bash(kubectl exec * -- env *), Bash(kubectl exec * -- nslookup *), Bash(kubectl exec * -- ps *), Bash(kubectl exec * -- df *), Bash(kubectl exec * -- free *), Bash(kubectl exec * -- netstat *), Bash(kubectl exec * -- sh -c "which *"), Bash(aws sqs receive-message *), Bash(aws logs start-query *), Bash(aws logs get-query-results *), Bash(aws cloudwatch get-metric-*), Bash(aws sqs get-queue-attributes *), Bash(aws sqs list-queues *), Bash(aws rds describe-*), Bash(curl -s *), Bash(date *), Bash(sleep *), Bash(git -C * pull *), Bash(git -C * fetch *), Bash(git -C * rev-parse *), Bash(git pull *), Bash(ssh -f -N -L *), Bash(ssh -o *), Bash(aws sts get-caller-identity *), Bash(PGOPTIONS=*), Bash(kill *), Bash(lsof *), Bash(which *), Bash(find /opt/homebrew *), Bash(ls *), Bash(cat *), Read, Grep, Glob, mcp__slack__slack_get_channel_history, mcp__slack__slack_get_thread_replies, mcp__slack__slack_get_user_profile
 argument-hint: "<sentry_url OR slack_url OR problem description OR screenshot>"
 ---
 
@@ -55,7 +55,7 @@ When you need to read code for a service, resolve the path as:
 - **Backend service:** `<repos.backend>/<service_name>/`
 - **Frontend app:** `<repos.frontend>/<app_name>/`
 
-If a path doesn't exist, try the other repo paths. If still not found, ask the user.
+If a path doesn't exist, try the other repo path. If still not found, ask the user.
 
 ## Cluster Context
 
@@ -282,9 +282,12 @@ HYPOTHESES
 
 For each hypothesis (starting with highest confidence), run targeted diagnostics to confirm or rule it out.
 
-**Before reading any source code:** Pull latest code in the relevant repo (use paths from `repos` in config).
+**Before reading any source code:** Ensure the local repo has the latest code. For each repo path in `repos` config, check if local master is behind remote and pull if needed:
 ```bash
-git -C <repo_path> pull --rebase --autostash 2>/dev/null
+git -C <repo_path> fetch origin master && \
+  if [ "$(git -C <repo_path> rev-parse master)" != "$(git -C <repo_path> rev-parse origin/master)" ]; then
+    git -C <repo_path> pull --rebase --autostash
+  fi
 ```
 
 Then resolve the service directory:
