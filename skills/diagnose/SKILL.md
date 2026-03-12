@@ -192,52 +192,13 @@ Gather baseline data from all relevant sources. Run commands in parallel where p
 
 **Always run (regardless of issue type):**
 
-1. Pod status in both namespaces:
-```bash
-kubectl get hpa -n cuemath 2>/dev/null | head -30
-kubectl get hpa -n cuemathasync 2>/dev/null | head -30
-```
-
-2. Recent scaling events for the affected service:
-```bash
-kubectl describe hpa <service> -n <namespace> | tail -30
-```
-
-3. Error count in CloudWatch (last 1 hour):
-```bash
-aws logs start-query --region ap-southeast-1 \
-  --log-group-name '/aws/containerinsights/cuemath-k8-prod/application' \
-  --start-time $(date -v-1H +%s) --end-time $(date +%s) \
-  --query-string "filter @logStream like 'containers.<service>-' and @logStream like '_cuemath_' and @message like /(?i)(error|exception|traceback)/ | stats count(*) as errorCount by bin(5m)" \
-  --output json
-```
-
-**For connection/infra symptoms, also run:**
-
-4. Node count and recent autoscaler activity:
-```bash
-kubectl get nodes --no-headers | wc -l
-kubectl get events -A --sort-by='.lastTimestamp' --field-selector reason=ScaledUp 2>/dev/null | tail -20
-```
-
-5. SQS queue depths:
-```bash
-aws sqs get-queue-attributes --region ap-southeast-1 \
-  --queue-url https://sqs.ap-southeast-1.amazonaws.com/484426514402/<queue_name> \
-  --attribute-names ApproximateNumberOfMessages ApproximateNumberOfMessagesNotVisible --output json
-```
-
-6. DLQ message counts for affected queues (append `_dlq` to queue name).
-
-**For application/error symptoms, also run:**
-
-7. Fetch Sentry issue details (if URL provided) or search for recent errors:
+1. Fetch Sentry issue details (if URL provided) or search for recent errors:
 ```bash
 curl -s -H "Authorization: Bearer <token>" \
   "https://sentry.io/api/0/organizations/<org>/issues/?query=<service_or_error>&sort=date&limit=10"
 ```
 
-8. Sample recent error logs from CloudWatch:
+2. Sample recent error logs from CloudWatch:
 ```bash
 # Fetch 10 recent error logs to see actual error messages
 aws logs start-query --region ap-southeast-1 \
@@ -246,6 +207,51 @@ aws logs start-query --region ap-southeast-1 \
   --query-string "filter @logStream like 'containers.<service>-' and @logStream like '_cuemath_' and @message like /(?i)(error|exception|traceback)/ | fields @timestamp, @message | sort @timestamp desc | limit 10" \
   --output json
 ```
+
+3. Read the relevant source code for the affected service (resolve from `repos` config).
+
+**For connection/infra symptoms, also run:**
+
+4. Pod status in both namespaces:
+```bash
+kubectl get hpa -n cuemath 2>/dev/null | head -30
+kubectl get hpa -n cuemathasync 2>/dev/null | head -30
+```
+
+5. Recent scaling events for the affected service:
+```bash
+kubectl describe hpa <service> -n <namespace> | tail -30
+```
+
+6. Error count in CloudWatch (last 1 hour):
+```bash
+aws logs start-query --region ap-southeast-1 \
+  --log-group-name '/aws/containerinsights/cuemath-k8-prod/application' \
+  --start-time $(date -v-1H +%s) --end-time $(date +%s) \
+  --query-string "filter @logStream like 'containers.<service>-' and @logStream like '_cuemath_' and @message like /(?i)(error|exception|traceback)/ | stats count(*) as errorCount by bin(5m)" \
+  --output json
+```
+
+7. Node count and recent autoscaler activity:
+```bash
+kubectl get nodes --no-headers | wc -l
+kubectl get events -A --sort-by='.lastTimestamp' --field-selector reason=ScaledUp 2>/dev/null | tail -20
+```
+
+8. SQS queue depths:
+```bash
+aws sqs get-queue-attributes --region ap-southeast-1 \
+  --queue-url https://sqs.ap-southeast-1.amazonaws.com/484426514402/<queue_name> \
+  --attribute-names ApproximateNumberOfMessages ApproximateNumberOfMessagesNotVisible --output json
+```
+
+9. DLQ message counts for affected queues (append `_dlq` to queue name).
+
+**For application/error symptoms, also run:**
+
+10. Additional Sentry context — related issues, release info, affected users count.
+
+11. Detailed CloudWatch log analysis — trace request flow, check upstream/downstream errors.
 
 **Output a TRIAGE SUMMARY** after this phase:
 ```
@@ -293,9 +299,9 @@ For each hypothesis (starting with highest confidence), run targeted diagnostics
 
 **Before reading any source code:** Ensure the local repo has the latest code. For each repo path in `repos` config, check if local master is behind remote and pull if needed:
 ```bash
-git -C <repo_path> fetch origin master && \
+git -C <repo_path> fetch origin master 2>/dev/null && \
   if [ "$(git -C <repo_path> rev-parse master)" != "$(git -C <repo_path> rev-parse origin/master)" ]; then
-    git -C <repo_path> pull --rebase --autostash
+    git -C <repo_path> pull --rebase --autostash 2>/dev/null || echo "WARN: Could not pull latest for <repo_path>. Using local code (may be stale)."
   fi
 ```
 
