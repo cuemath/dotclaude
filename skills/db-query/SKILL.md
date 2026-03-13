@@ -16,9 +16,21 @@ DB user: `dbadmin`, password: `$DB_PASSWORD` env var. All replicas are read-only
 
 ### User Config
 
-**First, read `~/.claude/db_query_config.json`** to get the user's saved settings (`ssh_user`, `ssh_key`, `db_password_env`).
+**First, read `~/.claude/config.json`** to get the user's saved settings. Use `user.ssh_user`, `user.ssh_key`, and `db.db_password_env` fields.
 
-If the config file doesn't exist or is missing fields, ask the user and then create/update `~/.claude/db_query_config.json` so they won't be asked again. This file is user-local (not in the shared skills directory). The SSH username pattern is typically `firstnamelastname`.
+If the config file doesn't exist or is missing these fields, ask the user for ALL missing fields at once and create/update `~/.claude/config.json`. This file is user-local (not in the shared skills directory) and shared across skills. The SSH username pattern is typically `firstnamelastname`.
+
+```json
+{
+  "user": {
+    "ssh_user": "firstnamelastname",
+    "ssh_key": "~/.ssh/id_rsa"
+  },
+  "db": {
+    "db_password_env": "DB_PASSWORD"
+  }
+}
+```
 
 ### psql Binary
 
@@ -66,10 +78,10 @@ Database name = service name (lowercase). If unsure which cluster a service belo
 
 2. Find the psql binary (see "psql Binary" section above). Store the path for use in step 4.
 
-3. Open the SSH tunnel (replace `<ssh_user>` and `<ssh_key>` per sections above):
+3. Kill any leftover tunnel on port 15432 from a previous run, then open a fresh one:
 
 ```bash
-ssh -f -N -L 15432:<rds_host>:5432 <ssh_user>@torpedo.cuemath.com -i <ssh_key>
+kill $(lsof -ti:15432) 2>/dev/null; ssh -f -N -L 15432:<rds_host>:5432 <user.ssh_user>@torpedo.cuemath.com -i <user.ssh_key>
 ```
 
 4. Run the query (use the full psql path from step 2):
@@ -78,10 +90,10 @@ ssh -f -N -L 15432:<rds_host>:5432 <ssh_user>@torpedo.cuemath.com -i <ssh_key>
 PGOPTIONS='-c statement_timeout=300000' PGPASSWORD=$DB_PASSWORD <psql_path> -h localhost -p 15432 -U dbadmin -d <db_name> -c "<query>"
 ```
 
-4. Always kill the tunnel when done:
+5. Always kill the tunnel when done:
 
 ```bash
-kill $(lsof -ti:15432)
+kill $(lsof -ti:15432) 2>/dev/null
 ```
 
 ## Query Guardrails
