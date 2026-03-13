@@ -322,7 +322,7 @@ Use Read, Grep, Glob to examine relevant source files (e.g., the file/function f
 
 **DB overload:**
 - RDS instance metrics: `aws cloudwatch get-metric-statistics` for CPUUtilization, DatabaseConnections, ReadLatency, WriteLatency
-- Check for long-running queries via DB analytics replica (use SSH tunnel pattern from db_query skill)
+- Check for long-running queries via DB analytics replica (use SSH tunnel pattern from db-query skill)
 - Check connection pool settings in service code
 
 **Application errors:**
@@ -401,7 +401,7 @@ Action Items:
 | INTELENROLLMENT | intelenrollment |
 | GODZILLA | communication |
 
-DB connection uses SSH tunnel through `torpedo.cuemath.com`, local port `15432`. See db_query skill for full connection details.
+DB connection uses SSH tunnel through `torpedo.cuemath.com`, local port `15432`. See db-query skill for full connection details.
 
 ## SQS Queue Names
 
