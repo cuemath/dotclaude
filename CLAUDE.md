@@ -30,7 +30,7 @@ Existing symlinks are skipped. If a non-symlink directory exists at the target, 
 | `update-team-skills` | `/update-team-skills` | Pull latest dotclaude repo and run setup.sh |
 | `db-query` | `/db-query [service] [query]` | Connect to a Cuemath analytics replica via SSH tunnel and run a SQL query |
 | `cloudwatch-query` | `/cloudwatch-query [service_or_log_group] [query]` | Query CloudWatch Logs Insights for a Cuemath service or log group |
-| `diagnose` | `/diagnose <sentry_url OR problem description>` | Debug production issues (infra or app). Read-only diagnostics across Sentry, kubectl, CloudWatch, SQS, RDS, and source code. Returns diagnosis with confidence % |
+| `diagnose` | `/diagnose <sentry_url OR slack_url OR problem description OR screenshot>` | Diagnose production issues from a Sentry URL, Slack URL, description, or screenshot |
 
 ## Adding a New Skill
 
