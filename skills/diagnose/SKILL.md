@@ -344,6 +344,22 @@ Hypothesis 1: [65% -> 90%] — confirmed by <new evidence>
 Hypothesis 2: [20% -> 5%] — contradicted by <new evidence>
 ```
 
+### Mandatory: Production Data Over Code Reasoning
+
+Code tells you what SHOULD happen. Only DB queries, CloudWatch logs, and Sentry data tell you what ACTUALLY happens. **Every factual claim in the diagnosis MUST be backed by production data — never by code reading alone.**
+
+Before concluding any of the following, you MUST run the corresponding query:
+
+| Claim | Required verification |
+|-------|----------------------|
+| "Service X is/isn't receiving event Y" | Query event DB (`eventtype_subscriber`, `event` tables) or CloudWatch logs for the service |
+| "Record/config X exists/doesn't exist in DB" | Query the relevant service DB via db-query skill |
+| "Data is/isn't being created/processed" | Query the downstream service DB to check actual state |
+| "This code path is/isn't being triggered" | Check CloudWatch logs for that service |
+| "The intent/purpose of config X was Y" | Verify with event DB routing AND check downstream effects in the target service DB |
+
+**If you have DB access (db-query skill) and CAN verify a claim with a query, you MUST run the query. Do not substitute code analysis for a query you can run. Do not present a diagnosis until every verifiable claim has been checked against production data.**
+
 ### Phase 6: SELF-CHECK
 
 Before presenting the final diagnosis, challenge it:
@@ -352,6 +368,7 @@ Before presenting the final diagnosis, challenge it:
 2. **Is there an alternative explanation?** Consider if a different root cause could produce the same symptoms.
 3. **Does the timeline make sense?** The cause must precede the effect.
 4. **Can you verify without side effects?** If there's a safe way to confirm, do it.
+5. **Is every claim backed by production data?** For each factual statement in the diagnosis, ask: "Did I verify this from DB/logs, or did I infer it from code?" If inferred from code and a DB query could confirm it — go back and run the query before proceeding.
 
 If after self-check, confidence is still < 95%:
 ```
