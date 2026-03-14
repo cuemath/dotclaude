@@ -334,7 +334,7 @@ AV events follow the naming convention `av_*`, `media_*`, `cue_*`, or `ivs_*`. T
 
 #### Critical Script Loading
 
-These scripts are **required for the platform to function** — the app will not work without them. Each has a family of events with suffixes like `_loading`, `_loaded`, `_failed`, `_fallback_failed`:
+These scripts are **blockers** — if any fail to load, the platform will show an error to the user. Each has a family of events with suffixes like `_loading`, `_loaded`, `_failed`, `_fallback_failed`:
 
 - **`mathjax_script_*`** — MathJax rendering engine (e.g., `mathjax_script_loading`, `mathjax_script_loaded`, `mathjax_script_failed`)
 - **`av_sdk_*`** — AV SDK loading for TokBox or IVS (e.g., `av_sdk_loading`, `av_sdk_loaded`, `av_sdk_loading_failed`)
@@ -364,18 +364,16 @@ STUDENT_SPEAKING_TIME
 
 | Event                                                                                                                      | Indicates                                                       |
 | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `av_sdk_loading_failed`                                                                                                    | AV SDK (TokBox/IVS) could not load — network issue or CDN block |
+| `av_sdk_loading_failed`                                                                                                    | **Blocker** — AV SDK failed to load, error shown to user        |
 | `CHANNEL_*_FAILED` events (e.g., `CHANNEL_METADATA_FETCH_FAILED`, `CHANNEL_TIMETOKEN_FETCH_FAILED`, `CHANNEL_INIT_FAILED`) | PubNub messaging failed — network issue                         |
 | `CHANNEL_GOT_STATUS_EVENT` with `PNNetworkIssuesCategory` in attributes                                                    | Confirmed network connectivity problem                          |
 | `CHANNEL_RECONNECTION_TIMEOUT`                                                                                             | PubNub gave up reconnecting — prolonged network loss            |
 | `PUBLISH_POST_FAILED`                                                                                                      | Message send failed — check `attributes` for reason             |
 | `SUBSCRIBER_RETRY_FAILED`                                                                                                  | Subscriber retry exhausted — messaging is broken                |
-| `mathjax_script_failed`                                                                                                    | MathJax failed to load — math rendering will not work           |
-| `worksheet_v3_script_failed` + `worksheet_v3_script_fallback_failed`                                                       | Learnosity CDN unreachable — worksheets will not work           |
-| `media_manager_destroyed` without preceding `av_session_connected`                                                         | AV never connected before being torn down                       |
+| `mathjax_script_failed`                                                                                                    | **Blocker** — MathJax failed to load, error shown to user       |
+| `worksheet_v3_script_failed` + `worksheet_v3_script_fallback_failed`                                                       | **Blocker** — Learnosity script failed to load, error shown to user |
 | Multiple `component_mounted` (with `attributes.component='App'`) repeating                                                 | User reloading the app — retrying due to failures               |
-| `av_call_requested` without subsequent `av_session_connected`                                                              | User clicked "Enter Class" but AV never connected               |
-| `SCREEN_DIMENSIONS` changes                                                                                                | User may have switched devices                                  |
+
 
 ### Correlation rules
 
