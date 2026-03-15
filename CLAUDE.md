@@ -30,6 +30,7 @@ Existing symlinks are skipped. If a non-symlink directory exists at the target, 
 | `update-team-skills` | `/update-team-skills` | Pull latest dotclaude repo and run setup.sh |
 | `db-query` | `/db-query [service] [query]` | Connect to a Cuemath analytics replica via SSH tunnel and run a SQL query |
 | `cloudwatch-query` | `/cloudwatch-query [service_or_log_group] [query]` | Query CloudWatch Logs Insights for a Cuemath service or log group |
+| `redshift-query` | `/redshift-query [query or question]` | Connect to Cuemath Redshift cluster via SSH tunnel and run a SQL query |
 | `diagnose` | `/diagnose <sentry_url OR slack_url OR problem description OR screenshot>` | Diagnose production issues from a Sentry URL, Slack URL, description, or screenshot |
 
 ## Adding a New Skill
